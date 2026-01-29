@@ -20,6 +20,7 @@ export async function register(data: RegisterPayload) {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
+            "ngrok-skip-browser-warning": "true",
         },
         body: JSON.stringify(data),
     });
@@ -34,10 +35,14 @@ export async function register(data: RegisterPayload) {
 }
 
 export async function login(data: LoginPayload) {
-    const response = await fetch(`${API_URL}/login`, {
+    const url = `${API_URL}/api/login`;
+
+    const response = await fetch(url, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
+            "Accept": "application/json",
+            "ngrok-skip-browser-warning": "1",
         },
         body: JSON.stringify(data),
     });

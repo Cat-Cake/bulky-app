@@ -2,11 +2,13 @@ import {useRouter} from "expo-router";
 import {useState} from "react";
 import {login} from "@/services/authService";
 import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, StyleSheet } from "react-native";
+import {useAuth} from "@/app/providers/AuthProvider";
 
 export default function LoginScreen() {
     const router = useRouter()
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
+    const {signIn} = useAuth()
 
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null);
@@ -21,10 +23,15 @@ export default function LoginScreen() {
             setError(null)
             setLoading(true)
 
-            await login({
+            const result = await login({
                 email: email.trim().toLowerCase(),
                 password: password
             })
+            await signIn(result.token, result.user);
+
+            if (result.user.role === "citoyen") router.replace("/citizen");
+            if (result.user.role === "agent") router.replace("/agent");
+            if (result.user.role === "gestionnaire") router.replace("/manager");
         } catch (e: any) {
             setError(e.message)
         } finally {

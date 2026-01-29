@@ -54,7 +54,7 @@ export default function RegisterScreen() {
                         <TextInput
                             value={firstname}
                             onChangeText={setFirstname}
-                            placeholder="Lucas"
+                            placeholder="Prénom"
                             style={styles.input}
                             autoCapitalize="words"
                             returnKeyType="next"
@@ -66,7 +66,7 @@ export default function RegisterScreen() {
                         <TextInput
                             value={lastname}
                             onChangeText={setLastname}
-                            placeholder="Manot"
+                            placeholder="Nom"
                             style={styles.input}
                             autoCapitalize="words"
                             returnKeyType="next"
@@ -78,7 +78,7 @@ export default function RegisterScreen() {
                 <TextInput
                     value={email}
                     onChangeText={setEmail}
-                    placeholder="lucas@email.com"
+                    placeholder="email@email.com"
                     style={styles.input}
                     autoCapitalize="none"
                     keyboardType="email-address"
