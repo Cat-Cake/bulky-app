@@ -7,6 +7,8 @@ type User = {
     id: string;
     firstname?: string;
     role: Role;
+    point: number;
+    isTeamLeader: boolean;
 };
 
 type AuthState = {

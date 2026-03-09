@@ -1,11 +1,28 @@
-import React, { useMemo, useState } from "react";
-import { View, Text, TextInput, Button, Image, Pressable, Alert } from "react-native";
+import React, {useEffect, useMemo, useState} from "react";
+import {
+    View,
+    Text,
+    TextInput,
+    Image,
+    Pressable,
+    Alert,
+    ScrollView,
+    StyleSheet,
+    ActivityIndicator,
+    Button
+} from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { useAuth } from "@/app/providers/AuthProvider";
 import { router, useLocalSearchParams } from "expo-router";
-import { ScrollView } from "react-native";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL as string;
+
+const ORANGE = "#F97316";
+const BG = "#F5F5F7";
+const CARD = "#FFFFFF";
+const TEXT_DARK = "#111827";
+const GRAY = "#6B7280";
+const SOFT = "#E5E7EB";
 
 const TYPES = [
     { key: "meuble", label: "Meuble" },
@@ -26,12 +43,49 @@ const TYPES = [
 export default function CreateReportScreen() {
     const { token } = useAuth();
 
-    // récupère ce que la map renvoie (router.setParams)
     const params = useLocalSearchParams<{
         lat?: string;
         lon?: string;
+        description?: string;
+        selectedTypes?: string;
+        imageUri?: string;
+        addressLabel?: string;
         label?: string;
     }>();
+
+    useEffect(() => {
+        if (typeof params.description === "string" && params.description !== description) {
+            setDescription(params.description);
+        }
+
+        if (typeof params.imageUri === "string" && params.imageUri !== imageUri) {
+            setImageUri(params.imageUri);
+        }
+
+        if (typeof params.addressLabel === "string" && params.addressLabel !== addressLabel) {
+            setAddressLabel(params.addressLabel);
+        }
+
+        if (typeof params.selectedTypes === "string") {
+            try {
+                const parsed = JSON.parse(params.selectedTypes) as string[];
+
+                // évite setSelectedTypes en boucle si identique
+                const same =
+                    parsed.length === selectedTypes.length &&
+                    parsed.every((v, i) => v === selectedTypes[i]);
+
+                if (!same) setSelectedTypes(parsed);
+            } catch {
+                // ignore
+            }
+        }
+    }, [
+        params.description,
+        params.imageUri,
+        params.addressLabel,
+        params.selectedTypes,
+    ]);
 
     const lat = params.lat ? Number(params.lat) : null;
     const lon = params.lon ? Number(params.lon) : null;
@@ -39,10 +93,7 @@ export default function CreateReportScreen() {
     const [description, setDescription] = useState("");
     const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
     const [imageUri, setImageUri] = useState<string | null>(null);
-
-    // optionnel : juste un texte pour "address.label"
     const [addressLabel, setAddressLabel] = useState("");
-
     const [loading, setLoading] = useState(false);
 
     const canSubmit = useMemo(() => {
@@ -77,7 +128,10 @@ export default function CreateReportScreen() {
         const hasCoords = Number.isFinite(lat as number) && Number.isFinite(lon as number);
 
         if (!canSubmit || !hasCoords) {
-            Alert.alert("Formulaire incomplet", "Remplis la description, le type, la photo et sélectionne un point sur la carte.");
+            Alert.alert(
+                "Formulaire incomplet",
+                "Remplis la description, le type, la photo et sélectionne un point sur la carte."
+            );
             return;
         }
 
@@ -103,9 +157,7 @@ export default function CreateReportScreen() {
 
             const res = await fetch(`${API_URL}/api/signalement`, {
                 method: "POST",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
+                headers: { Authorization: `Bearer ${token}` },
                 body: form,
             });
 
@@ -121,74 +173,190 @@ export default function CreateReportScreen() {
         }
     }
 
+    const hasCoords = Number.isFinite(lat as number) && Number.isFinite(lon as number);
+
     return (
-        <ScrollView
-            contentContainerStyle={{ padding: 16, gap: 12 }}
-            keyboardShouldPersistTaps="handled"
-        >
-            <Text style={{ fontSize: 22, fontWeight: "bold" }}>Nouveau signalement</Text>
+        <ScrollView style={styles.screen} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+            {/* Header */}
+            <View style={styles.header}>
+                <Text style={styles.title}>Nouveau signalement</Text>
 
-            <Button title="Retour" onPress={() => router.push('/citizen')} />
-
-            <Text>Description</Text>
-            <TextInput
-                value={description}
-                onChangeText={setDescription}
-                placeholder="Décris l’encombrant..."
-                style={{ borderWidth: 1, padding: 10, borderRadius: 8 }}
-            />
-
-            <Text>Types (multi)</Text>
-            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-                {TYPES.map((t) => {
-                    const active = selectedTypes.includes(t.key);
-                    return (
-                        <Pressable
-                            key={t.key}
-                            onPress={() => toggleType(t.key)}
-                            style={{
-                                borderWidth: 1,
-                                borderRadius: 999,
-                                paddingVertical: 8,
-                                paddingHorizontal: 12,
-                                opacity: active ? 1 : 0.6,
-                            }}
-                        >
-                            <Text>{active ? "✓ " : ""}{t.label}</Text>
-                        </Pressable>
-                    );
-                })}
+                <Pressable style={styles.backBtn} onPress={() => router.push("/citizen")}>
+                    <Text style={styles.backBtnText}>Retour</Text>
+                </Pressable>
             </View>
 
-            <Text>Photo</Text>
-            <Button title={imageUri ? "Changer la photo" : "Choisir une photo"} onPress={pickImage} />
-            {imageUri ? (
-                <Image source={{ uri: imageUri }} style={{ width: "100%", height: 180, borderRadius: 10, marginTop: 8 }} />
-            ) : null}
+            <Text style={[styles.label, { marginTop: 12 }]}>Emplacement</Text>
+            <Button
+                title="Choisir sur la carte"
+                onPress={() =>
+                    router.push({
+                        pathname: "/pick-location",
+                        params: {
+                            description,
+                            selectedTypes: JSON.stringify(selectedTypes),
+                            imageUri: imageUri ?? "",
+                            addressLabel,
+                        },
+                    })
+                }
+            />
 
-            <Text>Emplacement</Text>
-            <Button title="Choisir sur la carte" onPress={() => router.push("/pick-location")} />
+            <View style={[styles.coordsBox, hasCoords ? styles.coordsOk : styles.coordsKo]}>
+                <Text style={styles.coordsText}>
+                    {hasCoords
+                        ? `Point sélectionné : ${lat!.toFixed(5)}, ${lon!.toFixed(5)}`
+                        : "Aucun point sélectionné"}
+                </Text>
+            </View>
 
-            {Number.isFinite(lat as number) && Number.isFinite(lon as number) ? (
-                <Text>Point sélectionné : {lat?.toFixed(5)}, {lon?.toFixed(5)}</Text>
-            ) : (
-                <Text>Aucun point sélectionné</Text>
-            )}
-
-            <Text>Adresse</Text>
+            <Text style={[styles.label, { marginTop: 12 }]}>Adresse</Text>
             <TextInput
                 value={addressLabel}
                 onChangeText={setAddressLabel}
                 placeholder="Ex : Rue de la Vallée, Amiens"
-                style={{ borderWidth: 1, padding: 10, borderRadius: 8 }}
+                placeholderTextColor={GRAY}
+                style={styles.input}
                 autoCorrect={false}
             />
+            <Text>Veuillez écrire l'adresse si rien n'est ajouté dans le champ</Text>
 
-            <Button
-                title={loading ? "Envoi..." : "Envoyer le signalement"}
-                onPress={submit}
-                disabled={!canSubmit || loading}
-            />
+            <View style={styles.card}>
+                <Text style={styles.label}>Description</Text>
+                <TextInput
+                    value={description}
+                    onChangeText={setDescription}
+                    placeholder="Décris l’encombrant..."
+                    placeholderTextColor={GRAY}
+                    style={styles.input}
+                />
+
+                <Text style={[styles.label, { marginTop: 10 }]}>Types (multi)</Text>
+                <View style={styles.chipsWrap}>
+                    {TYPES.map((t) => {
+                        const active = selectedTypes.includes(t.key);
+                        return (
+                            <Pressable
+                                key={t.key}
+                                onPress={() => toggleType(t.key)}
+                                style={[styles.chip, active ? styles.chipActive : styles.chipInactive]}
+                            >
+                                <Text style={[styles.chipText, active ? styles.chipTextActive : styles.chipTextInactive]}>
+                                    {active ? "✓ " : ""}
+                                    {t.label}
+                                </Text>
+                            </Pressable>
+                        );
+                    })}
+                </View>
+
+                <Text style={[styles.label, { marginTop: 12 }]}>Photo</Text>
+                <Pressable style={styles.secondaryBtn} onPress={pickImage}>
+                    <Text style={styles.secondaryBtnText}>{imageUri ? "Changer la photo" : "Choisir une photo"}</Text>
+                </Pressable>
+
+                {imageUri ? <Image source={{ uri: imageUri }} style={styles.preview} /> : null}
+
+                <Pressable
+                    style={[styles.primaryBtn, (!canSubmit || loading) && styles.primaryBtnDisabled]}
+                    onPress={submit}
+                    disabled={!canSubmit || loading}
+                >
+                    {loading ? (
+                        <ActivityIndicator />
+                    ) : (
+                        <Text style={styles.primaryBtnText}>Envoyer le signalement</Text>
+                    )}
+                </Pressable>
+            </View>
         </ScrollView>
     );
 }
+
+const styles = StyleSheet.create({
+    screen: { flex: 1, backgroundColor: BG, paddingTop: 35 },
+    container: { padding: 16, paddingBottom: 28, gap: 12 },
+
+    header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+    title: { fontSize: 22, fontWeight: "800", color: TEXT_DARK },
+
+    backBtn: {
+        backgroundColor: "#FFF7ED",
+        borderWidth: 1,
+        borderColor: ORANGE,
+        paddingVertical: 10,
+        paddingHorizontal: 12,
+        borderRadius: 12,
+    },
+    backBtnText: { color: ORANGE, fontWeight: "800" },
+
+    card: {
+        backgroundColor: CARD,
+        borderRadius: 16,
+        padding: 14,
+        borderWidth: 1,
+        borderColor: SOFT,
+    },
+
+    label: { fontSize: 14, fontWeight: "700", color: TEXT_DARK, marginBottom: 6 },
+
+    input: {
+        borderWidth: 1,
+        borderColor: SOFT,
+        borderRadius: 12,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        color: TEXT_DARK,
+        backgroundColor: "#fff",
+    },
+
+    chipsWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+
+    chip: {
+        borderRadius: 999,
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        borderWidth: 1,
+    },
+    chipInactive: { borderColor: SOFT, backgroundColor: "#fff" },
+    chipActive: { borderColor: ORANGE, backgroundColor: "#FFF7ED" },
+
+    chipText: { fontSize: 13, fontWeight: "700" },
+    chipTextInactive: { color: TEXT_DARK },
+    chipTextActive: { color: ORANGE },
+
+    secondaryBtn: {
+        backgroundColor: "#fff",
+        borderWidth: 1,
+        borderColor: SOFT,
+        paddingVertical: 12,
+        borderRadius: 12,
+        alignItems: "center",
+    },
+    secondaryBtnText: { color: TEXT_DARK, fontWeight: "700" },
+
+    preview: { width: "100%", height: 190, borderRadius: 12, marginTop: 10, backgroundColor: SOFT },
+
+    coordsBox: {
+        marginTop: 10,
+        borderRadius: 12,
+        paddingVertical: 10,
+        paddingHorizontal: 12,
+        borderWidth: 1,
+    },
+    coordsOk: { borderColor: "#86EFAC", backgroundColor: "#F0FDF4" },
+    coordsKo: { borderColor: "#FECACA", backgroundColor: "#FEF2F2" },
+    coordsText: { color: TEXT_DARK, fontWeight: "700" },
+
+    primaryBtn: {
+        marginTop: 14,
+        backgroundColor: ORANGE,
+        paddingVertical: 14,
+        borderRadius: 14,
+        alignItems: "center",
+    },
+    primaryBtnDisabled: { opacity: 0.6 },
+    primaryBtnText: { color: "#fff", fontWeight: "800", fontSize: 15 },
+
+    helper: { marginTop: 10, fontSize: 12, color: GRAY },
+});
