@@ -65,38 +65,6 @@ export default function UsersScreen() {
         }
     }
 
-    async function deleteUser(userId: string) {
-        Alert.alert(
-            "Supprimer l'utilisateur",
-            "Cette action est irréversible. Confirmer ?",
-            [
-                { text: "Annuler", style: "cancel" },
-                {
-                    text: "Supprimer",
-                    style: "destructive",
-                    onPress: async () => {
-                        try {
-                            const res = await fetch(
-                                `${API_URL}/api/gestionnaire/utilisateurs/${userId}`,
-                                {
-                                    method: "DELETE",
-                                    headers: { Authorization: `Bearer ${token}` },
-                                }
-                            );
-                            if (!res.ok) {
-                                const data = await res.json();
-                                throw new Error(data?.error || "Impossible de supprimer");
-                            }
-                            setUsers((prev) => prev.filter((u) => u._id !== userId));
-                        } catch (e: any) {
-                            Alert.alert("Erreur", e?.message ?? "Erreur inconnue");
-                        }
-                    },
-                },
-            ]
-        );
-    }
-
     useEffect(() => {
         if (canUseApi && user?.role === "gestionnaire") {
             loadUsers();
@@ -201,13 +169,6 @@ export default function UsersScreen() {
                                     }
                                 >
                                     <Text style={styles.editBtnText}>Modifier</Text>
-                                </Pressable>
-
-                                <Pressable
-                                    style={styles.deleteBtn}
-                                    onPress={() => deleteUser(item._id)}
-                                >
-                                    <Text style={styles.deleteBtnText}>Supprimer</Text>
                                 </Pressable>
                             </View>
                         </View>

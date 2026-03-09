@@ -31,9 +31,9 @@ export default function TabLayout() {
             <Tabs.Screen
                 name="citizen"
                 options={{
-                    title: 'Mon espace',
+                    title: 'Statistiques',
                     tabBarIcon: ({ color }) => (
-                        <IconSymbol size={28} name="person.fill" color={color} />
+                        <IconSymbol size={28} name="chart.bar.fill" color={color} />
                     ),
                     href: user?.role === "citoyen" ? "/citizen" : null,
                 }}
@@ -41,9 +41,9 @@ export default function TabLayout() {
             <Tabs.Screen
                 name="rewards"
                 options={{
-                    title: 'Mes récompenses',
+                    title: 'Récompenses',
                     tabBarIcon: ({ color }) => (
-                        <IconSymbol size={28} name="person.fill" color={color} />
+                        <IconSymbol size={28} name="gift.fill" color={color} />
                     ),
                     href: user?.role === "citoyen" ? "/rewards" : null,
                 }}
@@ -52,9 +52,9 @@ export default function TabLayout() {
             <Tabs.Screen
                 name="manager"
                 options={{
-                    title: "Espace gestionnaire",
+                    title: "Statistiques",
                     tabBarIcon: ({ color }) => (
-                        <IconSymbol size={28} name="person.fill" color={color} />
+                        <IconSymbol size={28} name="chart.bar.fill" color={color} />
                     ),
                     href: user?.role === "gestionnaire" ? "/manager" : null,
                 }}
@@ -65,20 +65,9 @@ export default function TabLayout() {
                 options={{
                     title: "Contact",
                     tabBarIcon: ({ color }) => (
-                        <IconSymbol size={28} name="person.fill" color={color} />
+                        <IconSymbol size={28} name="message.fill" color={color} />
                     ),
                     href: user?.role === "gestionnaire" ? "/managerContact" : null,
-                }}
-            />
-
-            <Tabs.Screen
-                name="managerTeam"
-                options={{
-                    title: "Équipe",
-                    tabBarIcon: ({ color }) => (
-                        <IconSymbol size={28} name="person.fill" color={color} />
-                    ),
-                    href: user?.role === "gestionnaire" ? "/managerTeam" : null,
                 }}
             />
 
@@ -98,16 +87,27 @@ export default function TabLayout() {
                 options={{
                     title: "Récompenses",
                     tabBarIcon: ({ color }) => (
-                        <IconSymbol size={28} name="person.fill" color={color} />
+                        <IconSymbol size={28} name="gift.fill" color={color} />
                     ),
                     href: user?.role === "gestionnaire" ? "/managerRewards" : null,
                 }}
             />
 
             <Tabs.Screen
+                name="managerTeams"
+                options={{
+                    title: "Équipes",
+                    tabBarIcon: ({ color }) => (
+                        <IconSymbol size={28} name="figure.2.and.child.holdinghands" color={color} />
+                    ),
+                    href: user?.role === "gestionnaire" ? "/managerTeams" : null,
+                }}
+            />
+
+            <Tabs.Screen
                 name="agent"
                 options={{
-                    title: 'Mon espace',
+                    title: 'Statistiques',
                     tabBarIcon: ({ color }) => (
                         <IconSymbol size={28} name="person.fill" color={color} />
                     ),
@@ -120,7 +120,7 @@ export default function TabLayout() {
                 options={{
                     title: 'Équipe',
                     tabBarIcon: ({ color }) => (
-                        <IconSymbol size={28} name="person.fill" color={color} />
+                        <IconSymbol size={28} name="figure.2.and.child.holdinghands" color={color} />
                     ),
                     href: user?.role === "agent" ? "/team" : null,
                 }}
